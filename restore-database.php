@@ -5,8 +5,8 @@
 
 $key = 'yourpassword';
 
-$credential['host']		= "localhost";
-$credential['user']		= "root";
+$credential['host']	= "localhost";
+$credential['user']	= "root";
 $credential['passwd'] 	= "root";
 $credential['dbName'] 	= "wordpress-tutorial";
 $credential['dumpdir'] 	= "/home/haris/Downloads/wordpress-tutorial.sql";
