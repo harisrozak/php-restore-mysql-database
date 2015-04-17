@@ -3,13 +3,14 @@ Run this php file on cron or direct url to restore your specific MySQL database 
 
 Make sure you have fill all required variable on this file, for example:
 ```
-key = 'yourpassword';
+$key = 'yourpassword';
 
-$credential['host'] = "localhost";
-$credential['user'] = "root";
-$credential['passwd'] = "root";
-$credential['dbName'] = "wordpress-tutorial";
-$credential['dumpdir'] = "/home/haris/wordpress-tutorial.sql";
+$this->cred['host'] = "localhost";
+$this->cred['user'] = "root";
+$this->cred['passwd'] = "root";
+$this->cred['dbName'] = "example_db";
+$this->cred['dumpdir'] = "/home/harishost/backups-db/example_db.sql";
+$this->cred['prefix'] = "wp_";
 ```
 
 ##Usage Example

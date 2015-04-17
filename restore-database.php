@@ -12,7 +12,7 @@ Class ResetDB
 {	
 	function __construct($provided_key = '')
 	{	
-		$key = 'ecaekey';
+		$key = 'yourpassword';
 
 		$this->cred['host']		= "localhost";
 		$this->cred['user']		= "root";
