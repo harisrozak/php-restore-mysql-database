@@ -1,62 +1,100 @@
 <?php
 /**
  * PHP Restore MySQL Database
+ * @author harisrozak
  */
 
-$key = 'yourpassword';
+$get_key = isset($_GET['key']) ? $_GET['key'] : '';
+$ResetDB = new ResetDB($get_key);
+$ResetDB->do_reset();
 
-$credential['host']	= "localhost";
-$credential['user']	= "root";
-$credential['passwd'] 	= "root";
-$credential['dbName'] 	= "wordpress-tutorial";
-$credential['dumpdir'] 	= "/home/haris/Downloads/wordpress-tutorial.sql";
-
-$mysqli = new mysqli($credential['host'],$credential['user'],$credential['passwd'],$credential['dbName']);
-
-if($mysqli->connect_errno)
-{
-	echo "Connection failed: %s\n".$mysqli->connect_errno;
-	exit();
-}
-else
-{
-	if(isset($_GET['key']) && $_GET['key'] == $key)
-	{
-		restore_now();
-	}
-}
-
-/**
- * Functions
- */
-function restore_now()
-{
-	drop_all_tables();
-	restore_database();
-
-	echo "Restore database finished!";
-}
-
-function drop_all_tables()
+Class ResetDB
 {	
-	global $mysqli;
+	function __construct($provided_key = '')
+	{	
+		$key = 'ecaekey';
 
-	$mysqli->query('SET foreign_key_checks = 0') or die($mysqli->error);
+		$this->cred['host']		= "localhost";
+		$this->cred['user']		= "root";
+		$this->cred['passwd'] 	= "root";
+		$this->cred['dbName'] 	= "example_db";
+		$this->cred['dumpdir'] 	= "/home/harishost/backups-db/example_db.sql";
+		$this->cred['prefix']	= "wp_";
 
-	if ($result = $mysqli->query("SHOW TABLES"))
-	{
-	    while($row = $result->fetch_array(MYSQLI_NUM))
-	    {
-	        $mysqli->query('DROP TABLE IF EXISTS '.$row[0]);
-	    }
+		$this->isValidKey = $provided_key == $key ? true : false;
+		$this->mysqli = new mysqli($this->cred['host'],$this->cred['user'],$this->cred['passwd'],$this->cred['dbName']);
 	}
 
-	$mysqli->query('SET foreign_key_checks = 1');
-}
+	public function do_reset()
+	{
+		$connection = $this->connection();
 
-function restore_database()
-{
-	global $credential;
+		if($connection['status'])
+		{
+			$this->drop_tables();
+			$this->restore_tables();
+
+			echo "Restore database finished!";
+		}
+		else
+		{
+			echo $connection['message'];
+		}
+	}
+
+	private function connection()
+	{
+		$return = array(
+			'status' => true,
+			'message' => 'Invalid credential'
+		);
+
+		// key check
+		if(! $this->isValidKey) $return['status'] = false;
+
+		// mysql connect check		
+		if($this->mysqli->connect_errno) {
+			$return['status'] = false;
+			$return['message'] = "Connection failed: %s\n".$this->mysqli->connect_errno;			
+		}
+
+		return $return;
+	}
+
+	private function drop_tables()
+	{
+		$prefix = $this->cred['prefix']; // default wordpress
+		$prefix_woo = $this->cred['prefix'].'woocommerce_'; // woocomerce
+
+		$sql = "DROP TABLE IF EXISTS {$prefix}commentmeta,{$prefix}comments,{$prefix}links,
+			{$prefix}options,{$prefix}postmeta,{$prefix}posts,{$prefix}terms,
+			{$prefix}term_relationships,{$prefix}term_taxonomy,
+			{$prefix}usermeta,{$prefix}users,
+			{$prefix_woo}attribute_taxonomies,{$prefix_woo}downloadable_product_permissions,
+			{$prefix_woo}order_itemmeta,{$prefix_woo}order_items,
+			{$prefix_woo}tax_rates,{$prefix_woo}tax_rate_locations,
+			{$prefix_woo}termmeta;";
+
+		$this->mysqli->query($sql) or die($this->mysqli->error);
+	}
+
+	private function restore_tables()
+	{
+		$templine = '';
+		$lines = file($this->cred['dumpdir']);
 	
-	system("mysql -u{$credential['user']} -p{$credential['passwd']} {$credential['dbName']} < {$credential['dumpdir']}");
+		foreach ($lines as $line)
+		{
+			if (substr($line, 0, 2) == '--' || $line == '')
+			continue;
+
+			$templine .= $line;
+	
+			if (substr(trim($line), -1, 1) == ';')
+			{
+				$this->mysqli->query($templine) or print('Error performing query \'<strong>' . $templine . '\': ' . mysql_error() . '<br /><br />');
+				$templine = '';
+			}
+		}
+	}
 }
